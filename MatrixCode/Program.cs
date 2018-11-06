@@ -10,6 +10,8 @@ namespace MatrixCode
     {
         static void Main(string[] args)
         {
+            DisplayScreen output = new DisplayScreen();
+            output.Run();
         }
     }
 }
