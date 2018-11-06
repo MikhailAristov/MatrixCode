@@ -8,7 +8,7 @@ using System.Diagnostics;
 namespace MatrixCode
 {
 
-    class CodeDrop
+    class CodeDrop : IComparable<CodeDrop>
     {
         public const int MinDropLength = 5;
         public const int MaxDropLength = 45;
@@ -16,13 +16,13 @@ namespace MatrixCode
         public static char[] Symbols;
 
         private DisplayScreen MyScreen;
-        private readonly int ID;
+        public readonly int ID;
         public int XPos { get; private set; }
         private int YPos;
         private int Size;
         private List<char> Content;
 
-        public bool IsOnScreen
+        public bool HasLeftTheScreen
         {
             get
             {
@@ -34,7 +34,7 @@ namespace MatrixCode
         {
             get
             {
-                return YPos <= Size;
+                return YPos < Size;
             }
         }
 
@@ -55,7 +55,7 @@ namespace MatrixCode
         {
             // Reset position
             XPos = NewLane;
-            YPos = -1;
+            YPos = 0;
             // Sample a new length
             Size = MyScreen.RNG.Next(MinDropLength, MaxDropLength);
             // Clear old content and replace it with content of new length
@@ -64,6 +64,38 @@ namespace MatrixCode
             {
                 Content.Add(Symbols[MyScreen.RNG.Next(Symbols.Length)]);
             }
+        }
+
+        public void Update()
+        {
+            YPos += 1;
+        }
+
+        public void Display()
+        {
+            // if (IsOnScreen) {
+            //(YPos >= 0) && (YPos - Size < MyScreen.Height)
+            for (int i = 0; i < Size; i++)
+            {
+                int y = YPos - i;
+                // Write the current symbol to its new position, if visible
+                if (y >= 0 && y < MyScreen.Height)
+                {
+                    MyScreen.WriteChar(XPos, y, Content[i]);
+                }
+                // If the drop no longer touches the top edge, erase the symbol right above it
+                // to create the illusion of movement
+                if (!TouchesTopEdge)
+                {
+                    MyScreen.WriteChar(XPos, YPos - Size, ' ');
+                }
+            }
+            //}
+        }
+
+        public int CompareTo(CodeDrop other)
+        {
+            return this.ID - other.ID;
         }
     }
 }

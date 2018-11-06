@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Timers;
 
 namespace MatrixCode
 {
@@ -12,8 +13,13 @@ namespace MatrixCode
         public const int MaxDropsOnTopEdge = 7;
         public const int MaxDropsOnScreen = 50;
 
-        private readonly int Width;
-        public int Height { get; private set; }
+        public const int UpdateInterval = 100; // in milliseconds
+
+        public readonly int Width;
+        public readonly int Height;
+
+        private const int XMargin = 2;
+        private const int YMargin = 2;
 
         private string OldConsoleTitle;
         private ConsoleColor OldBG;
@@ -23,12 +29,14 @@ namespace MatrixCode
         private SortedSet<CodeDrop> Drops;
 
         public Random RNG;
+
+        private bool UpdateRunning;
                 
         public DisplayScreen()
         {
             // Display parameters
-            Width = Console.WindowWidth;
-            Height = Console.WindowHeight;
+            Width = Console.WindowWidth - 2 * XMargin - 1;
+            Height = Console.WindowHeight - 2 * YMargin;
             // Allowed drop symbols
             CodeDrop.Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Range(161, 95)).Select(i => (char)i).ToArray();
             // Initialize free lane set
@@ -46,9 +54,10 @@ namespace MatrixCode
             OldBG = Console.BackgroundColor;
             OldFG = Console.ForegroundColor;
             // Customize console
-            Console.Title = "MATRIX";
+            Console.Title = "What is the Matrix?";
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.Green;
+            Console.CursorVisible = false;
         }
 
         private void TeardownEnvironment()
@@ -57,13 +66,12 @@ namespace MatrixCode
             Console.Title = OldConsoleTitle;
             Console.BackgroundColor = OldBG;
             Console.ForegroundColor = OldFG;
+            Console.CursorVisible = true;
         }
 
         private CodeDrop AddDrop() {
-            Debug.Assert(Drops.Count < MaxDropsOnScreen);
-            Debug.Assert(Drops.Where(d => d.TouchesTopEdge).Count() < MaxDropsOnTopEdge);
             // Check if we can recycle an old drop
-            CodeDrop drop = Drops.Where(d => !d.IsOnScreen).FirstOrDefault();
+            CodeDrop drop = Drops.Where(d => d.HasLeftTheScreen).FirstOrDefault();
             if (drop != null)
             {
                 ReturnLane(drop.XPos);
@@ -92,15 +100,44 @@ namespace MatrixCode
 
         public void Run()
         {
-            //Console.WriteLine(new String(DropSymbols));
-            do
-            {
-                while (!Console.KeyAvailable)
-                {
-                    // Do something
-                }
-            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+            // Run the timed events
+            Timer aTimer = new Timer(UpdateInterval);
+            aTimer.Elapsed += new ElapsedEventHandler(Update);
+            //aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+            // Wait for escape command
+            while (!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape);
+            // Stop the timer and tear down the environment
+            aTimer.Enabled = false;
             TeardownEnvironment();
+        }
+
+        public void Update(Object source, ElapsedEventArgs e) {
+            if (!UpdateRunning)
+            {
+                UpdateRunning = true;
+                // Update each drop
+                foreach (CodeDrop d in Drops)
+                {
+                    d.Update();
+                    d.Display();
+                }
+                // Check if there are enough drops touching the top edge, if not, add some more
+                int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Count, MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
+                for (int i = 0; i < dropBudget; i++)
+                {
+                    AddDrop();
+                }
+                Console.SetCursorPosition(0, 0);
+                UpdateRunning = false;
+            }
+
+        }
+
+        public void WriteChar(int XPos, int YPos, char Payload)
+        {
+            Console.SetCursorPosition(XPos + XMargin, YPos + YMargin);
+            Console.Write(Payload);
         }
     }
 }
