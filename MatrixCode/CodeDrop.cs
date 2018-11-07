@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Timers;
 
@@ -8,16 +9,16 @@ namespace MatrixCode
 
     class CodeDrop : IComparable<CodeDrop>
     {
-        public const int MinDropLength = 5;
-        public const int MaxDropLength = 45;
+        private const int MinDropLength = 5;
+        private const int MaxDropLength = 45;
 
         public const int MinTimerInterval = 50; // in milliseconds
         public const int MaxTimerInterval = 150;
 
-        public const double GlowingPercentile = 0.5; // fastest drops that glow
+        private const double GlowingPercentile = 0.5; // percentage of the fastest drops that should glow
         private const double MaxGlowingInterval = 1.0 / (1.0 / MaxTimerInterval + (1.0 - GlowingPercentile) * (1.0 / MinTimerInterval - 1.0 / MaxTimerInterval));
 
-        public static char[] Symbols;
+        private static char[] Symbols;
 
         private DisplayScreen MyScreen;
         public readonly int ID;
@@ -56,9 +57,13 @@ namespace MatrixCode
         public CodeDrop(DisplayScreen Caller, int NewID, int Lane)
         {
             Debug.Assert(Caller.RNG != null);
-            Debug.Assert(Symbols != null && Symbols.Length > 0);
             Debug.Assert(NewID >= 0);
             Debug.Assert(Lane >= 0);
+            // Set allowed drop symbols íf not yet set
+            if (Symbols == null)
+            {
+                Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Range(161, 95)).Select(i => (char)i).ToArray();
+            }
             // Set parameters
             MyScreen = Caller;
             ID = NewID;

@@ -9,10 +9,10 @@ namespace MatrixCode
 {
     class DisplayScreen
     {
-        public const int MaxDropsOnTopEdge = 7;
-        public const int MaxDropsOnScreen = 50;
+        private const int MaxDropsOnTopEdge = 7;
+        private const int MaxDropsOnScreen = 50;
 
-        public readonly int Width;
+        private readonly int Width;
         public readonly int Height;
 
         private const int MarginLeft = 1;
@@ -38,8 +38,6 @@ namespace MatrixCode
             // Display parameters
             Width = Console.WindowWidth - MarginLeft - MarginRight;
             Height = Console.WindowHeight - MarginTop - MarginBottom;
-            // Allowed drop symbols
-            CodeDrop.Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Range(161, 95)).Select(i => (char)i).ToArray();
             // Initialize free lane set
             FreeLanes = new SortedSet<int>(Enumerable.Range(0, Width));
             Drops = new SortedSet<CodeDrop>();
