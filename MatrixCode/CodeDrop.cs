@@ -9,8 +9,8 @@ namespace MatrixCode
 
     class CodeDrop : IComparable<CodeDrop>
     {
-        private const int MinDropLength = 5;
-        private const int MaxDropLength = 45;
+        public const int MinDropLength = 5;
+        public const int MaxDropLength = 45;
 
         public const int MinTimerInterval = 50; // in milliseconds
         public const int MaxTimerInterval = 150;

@@ -9,8 +9,8 @@ namespace MatrixCode
 {
     class DisplayScreen
     {
-        private const int MaxDropsOnTopEdge = 7;
-        private const int MaxDropsOnScreen = 50;
+        private readonly int MaxDropsOnTopEdge;
+        private readonly int MaxDropsOnScreen;
 
         private readonly int Width;
         public readonly int Height;
@@ -38,6 +38,8 @@ namespace MatrixCode
             // Display parameters
             Width = Console.WindowWidth - MarginLeft - MarginRight;
             Height = Console.WindowHeight - MarginTop - MarginBottom;
+            MaxDropsOnScreen = (int)Math.Min(Width * Height / (CodeDrop.MinDropLength + CodeDrop.MaxDropLength), Width * 0.45);
+            MaxDropsOnTopEdge = MaxDropsOnScreen / 2;
             // Initialize free lane set
             FreeLanes = new SortedSet<int>(Enumerable.Range(0, Width));
             Drops = new SortedSet<CodeDrop>();
@@ -115,7 +117,7 @@ namespace MatrixCode
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void Update(Object source, ElapsedEventArgs e) {
             // Check if there are enough drops touching the top edge, if not, add some more
-            int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Count, MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
+            int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Where(d => !d.HasLeftTheScreen).Count(), MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
             for (int i = 0; i < dropBudget; i++)
             {
                 AddDrop();
