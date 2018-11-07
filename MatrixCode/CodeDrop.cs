@@ -65,7 +65,7 @@ namespace MatrixCode
             // Set allowed drop symbols íf not yet set
             if (Symbols == null)
             {
-                Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Range(161, 95)).Select(i => (char)i).ToArray();
+                Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Concat(Enumerable.Range(128, 91), Enumerable.Range(224, 30))).Select(i => (char)i).ToArray();
             }
             // Set parameters
             MyScreen = Caller;
