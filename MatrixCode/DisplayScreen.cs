@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Timers;
 
 namespace MatrixCode
@@ -10,8 +11,6 @@ namespace MatrixCode
     {
         public const int MaxDropsOnTopEdge = 7;
         public const int MaxDropsOnScreen = 50;
-
-        public const int UpdateInterval = 100; // in milliseconds
 
         public readonly int Width;
         public readonly int Height;
@@ -33,8 +32,6 @@ namespace MatrixCode
         private SortedSet<CodeDrop> Drops;
 
         public Random RNG;
-
-        private bool UpdateRunning;
                 
         public DisplayScreen()
         {
@@ -106,36 +103,25 @@ namespace MatrixCode
         public void Run()
         {
             // Run the timed events
-            Timer aTimer = new Timer(UpdateInterval);
-            aTimer.Elapsed += new ElapsedEventHandler(Update);
-            aTimer.AutoReset = true;
-            aTimer.Enabled = true;
+            Timer myTimer = new Timer((CodeDrop.MinTimerInterval + CodeDrop.MaxTimerInterval) / 2);
+            myTimer.Elapsed += new ElapsedEventHandler(Update);
+            myTimer.AutoReset = true;
+            myTimer.Enabled = true;
             // Wait for escape command
             while (!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape);
             // Stop the timer and tear down the environment
-            aTimer.Enabled = false;
+            myTimer.Enabled = false;
             TeardownEnvironment();
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         private void Update(Object source, ElapsedEventArgs e) {
-            if (!UpdateRunning)
+            // Check if there are enough drops touching the top edge, if not, add some more
+            int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Count, MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
+            for (int i = 0; i < dropBudget; i++)
             {
-                UpdateRunning = true;
-                // Update each drop
-                foreach (CodeDrop d in Drops)
-                {
-                    d.UpdateState();
-                    d.Display();
-                }
-                // Check if there are enough drops touching the top edge, if not, add some more
-                int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Count, MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
-                for (int i = 0; i < dropBudget; i++)
-                {
-                    AddDrop();
-                }
-                UpdateRunning = false;
+                AddDrop();
             }
-
         }
 
         public void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
