@@ -18,8 +18,12 @@ namespace MatrixCode
 
         private const int MarginLeft = 1;
         private const int MarginRight = 2;
-        private const int MarginTop = 0;
+        private const int MarginTop = 1;
         private const int MarginBottom = 2;
+
+        public const ConsoleColor TextColor = ConsoleColor.Green;
+        public const ConsoleColor GlowingTextColor = ConsoleColor.White;
+        public const ConsoleColor BackgroundColor = ConsoleColor.Black;
 
         private string OldConsoleTitle;
         private ConsoleColor OldBG;
@@ -55,8 +59,8 @@ namespace MatrixCode
             OldFG = Console.ForegroundColor;
             // Customize console
             Console.Title = "What is the Matrix?";
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.BackgroundColor = BackgroundColor;
+            Console.ForegroundColor = TextColor;
             Console.CursorVisible = false;
         }
 
@@ -120,7 +124,7 @@ namespace MatrixCode
                 // Update each drop
                 foreach (CodeDrop d in Drops)
                 {
-                    d.Update();
+                    d.UpdateState();
                     d.Display();
                 }
                 // Check if there are enough drops touching the top edge, if not, add some more
