@@ -81,6 +81,7 @@ namespace MatrixCode
             {
                 drop = new CodeDrop(this, Drops.Count, ReserveLane());
                 Drops.Add(drop);
+                //WriteChar(Drops.Count, 0, '*');
             }
             return drop;
         }

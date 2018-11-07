@@ -20,21 +20,28 @@ namespace MatrixCode
         public int XPos { get; private set; }
         private int YPos;
         private int Size;
-        private List<char> Content;
-
-        public bool HasLeftTheScreen
-        {
-            get
-            {
-                return YPos - Size > MyScreen.Height;
-            }
-        }
 
         public bool TouchesTopEdge
         {
             get
             {
                 return YPos < Size;
+            }
+        }
+
+        public bool TouchesBottomEdge
+        {
+            get
+            {
+                return YPos > MyScreen.Height;
+            }
+        }
+
+        public bool HasLeftTheScreen
+        {
+            get
+            {
+                return YPos - Size > MyScreen.Height;
             }
         }
 
@@ -47,7 +54,6 @@ namespace MatrixCode
             // Set parameters
             MyScreen = Caller;
             ID = NewID;
-            Content = new List<char>();
             Reset(Lane);
         }
 
@@ -58,12 +64,6 @@ namespace MatrixCode
             YPos = 0;
             // Sample a new length
             Size = MyScreen.RNG.Next(MinDropLength, MaxDropLength);
-            // Clear old content and replace it with content of new length
-            Content.Clear();
-            for(int i = 0; i < Size; i++)
-            {
-                Content.Add(Symbols[MyScreen.RNG.Next(Symbols.Length)]);
-            }
         }
 
         public void Update()
@@ -73,29 +73,21 @@ namespace MatrixCode
 
         public void Display()
         {
-            // if (IsOnScreen) {
-            //(YPos >= 0) && (YPos - Size < MyScreen.Height)
-            for (int i = 0; i < Size; i++)
+            if (!TouchesBottomEdge)
             {
-                int y = YPos - i;
-                // Write the current symbol to its new position, if visible
-                if (y >= 0 && y < MyScreen.Height)
-                {
-                    MyScreen.WriteChar(XPos, y, Content[i]);
-                }
-                // If the drop no longer touches the top edge, erase the symbol right above it
-                // to create the illusion of movement
-                if (!TouchesTopEdge)
-                {
-                    MyScreen.WriteChar(XPos, YPos - Size, ' ');
-                }
+                MyScreen.WriteChar(XPos, YPos, Symbols[MyScreen.RNG.Next(Symbols.Length)]);
             }
-            //}
+            // If the drop no longer touches the top edge, erase the symbol right above it
+            // to create the illusion of movement
+            if (!TouchesTopEdge)
+            {
+                MyScreen.WriteChar(XPos, YPos - Size, ' ');
+            }
         }
 
         public int CompareTo(CodeDrop other)
         {
-            return this.ID - other.ID;
+            return this.XPos - other.XPos;
         }
     }
 }
