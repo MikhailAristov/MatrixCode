@@ -18,6 +18,9 @@ namespace MatrixCode
         private const double GlowingPercentile = 0.5; // percentage of the fastest drops that should glow
         private const double MaxGlowingInterval = 1.0 / (1.0 / MaxTimerInterval + (1.0 - GlowingPercentile) * (1.0 / MinTimerInterval - 1.0 / MaxTimerInterval));
 
+        private const int MeanIntervalBetweenRandomChanges = 250;// in milliseconds
+        private double ProbabilityOfRandomChange;
+
         private static char[] Symbols;
 
         private DisplayScreen MyScreen;
@@ -87,6 +90,8 @@ namespace MatrixCode
             MyTimer.Enabled = true;
             // Check whether to glow
             Glow = (MyTimer.Interval < MaxGlowingInterval);
+            // Recalculate random change probability
+            ProbabilityOfRandomChange = (double)MyTimer.Interval / MeanIntervalBetweenRandomChanges;
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -120,12 +125,17 @@ namespace MatrixCode
             {
                 LastChar = Symbols[MyScreen.RNG.Next(Symbols.Length)];
                 MyScreen.WriteChar(XPos, YPos, LastChar, Glow ? DisplayScreen.GlowingTextColor : DisplayScreen.TextColor);
-
             }
             // If the drop no longer touches the top edge, erase the symbol right above it to create the illusion of movement
             if (!TouchesTopEdge)
             {
                 MyScreen.WriteChar(XPos, YPos - Size, ' ', DisplayScreen.BackgroundColor);
+            }
+            // Randomly alter a previously placed character
+            if (MyScreen.RNG.NextDouble() < ProbabilityOfRandomChange)
+            {
+                int MinY = Math.Max(0, YPos - Size + 1), MaxY = Math.Min(YPos - 1, MyScreen.Height + 1);
+                MyScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
             }
         }
 
