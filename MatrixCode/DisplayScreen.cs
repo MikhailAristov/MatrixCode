@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Timers;
 
@@ -18,8 +16,10 @@ namespace MatrixCode
         public readonly int Width;
         public readonly int Height;
 
-        private const int XMargin = 2;
-        private const int YMargin = 2;
+        private const int MarginLeft = 1;
+        private const int MarginRight = 2;
+        private const int MarginTop = 0;
+        private const int MarginBottom = 2;
 
         private string OldConsoleTitle;
         private ConsoleColor OldBG;
@@ -35,8 +35,8 @@ namespace MatrixCode
         public DisplayScreen()
         {
             // Display parameters
-            Width = Console.WindowWidth - 2 * XMargin - 1;
-            Height = Console.WindowHeight - 2 * YMargin;
+            Width = Console.WindowWidth - MarginLeft - MarginRight;
+            Height = Console.WindowHeight - MarginTop - MarginBottom;
             // Allowed drop symbols
             CodeDrop.Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Range(161, 95)).Select(i => (char)i).ToArray();
             // Initialize free lane set
@@ -104,7 +104,7 @@ namespace MatrixCode
             // Run the timed events
             Timer aTimer = new Timer(UpdateInterval);
             aTimer.Elapsed += new ElapsedEventHandler(Update);
-            //aTimer.AutoReset = true;
+            aTimer.AutoReset = true;
             aTimer.Enabled = true;
             // Wait for escape command
             while (!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape);
@@ -113,7 +113,7 @@ namespace MatrixCode
             TeardownEnvironment();
         }
 
-        public void Update(Object source, ElapsedEventArgs e) {
+        private void Update(Object source, ElapsedEventArgs e) {
             if (!UpdateRunning)
             {
                 UpdateRunning = true;
@@ -129,16 +129,20 @@ namespace MatrixCode
                 {
                     AddDrop();
                 }
-                Console.SetCursorPosition(0, 0);
                 UpdateRunning = false;
             }
 
         }
 
-        public void WriteChar(int XPos, int YPos, char Payload)
+        public void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
         {
-            Console.SetCursorPosition(XPos + XMargin, YPos + YMargin);
-            Console.Write(Payload);
+            // Cast inputs
+            short x = (short)(XPos + MarginLeft);
+            short y = (short)(YPos + MarginTop);
+            byte ch = (byte)Payload;
+            short att = (short)ForegroundColor;
+            // Call API
+            ConsoleAPI.WriteChar(x, y, ch, att);
         }
     }
 }

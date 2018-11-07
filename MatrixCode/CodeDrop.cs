@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace MatrixCode
@@ -75,13 +71,13 @@ namespace MatrixCode
         {
             if (!TouchesBottomEdge)
             {
-                MyScreen.WriteChar(XPos, YPos, Symbols[MyScreen.RNG.Next(Symbols.Length)]);
+                MyScreen.WriteChar(XPos, YPos, Symbols[MyScreen.RNG.Next(Symbols.Length)], ConsoleColor.Green);
             }
             // If the drop no longer touches the top edge, erase the symbol right above it
             // to create the illusion of movement
             if (!TouchesTopEdge)
             {
-                MyScreen.WriteChar(XPos, YPos - Size, ' ');
+                MyScreen.WriteChar(XPos, YPos - Size, ' ', ConsoleColor.Black);
             }
         }
 
