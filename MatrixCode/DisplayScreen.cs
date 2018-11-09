@@ -15,10 +15,10 @@ namespace MatrixCode
         private readonly int Width;
         public readonly int Height;
 
-        private const int MarginLeft = 1;
-        private const int MarginRight = 2;
-        private const int MarginTop = 1;
-        private const int MarginBottom = 2;
+        private const int MarginLeft = 0;
+        private const int MarginRight = 0;
+        private const int MarginTop = 0;
+        private const int MarginBottom = 0;
 
         public const ConsoleColor TextColor = ConsoleColor.Green;
         public const ConsoleColor GlowingTextColor = ConsoleColor.White;
