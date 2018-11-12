@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Timers;
 
 namespace MatrixCode
 {
     class DisplayScreen
     {
+        public const int UpdateTimerInterval = 20; // in milliseconds
+        private const int RepopulateInterval = 5 * UpdateTimerInterval;
+
         private readonly int MaxDropsOnTopEdge;
         private readonly int MaxDropsOnScreen;
 
@@ -23,6 +25,7 @@ namespace MatrixCode
         public const ConsoleColor TextColor = ConsoleColor.Green;
         public const ConsoleColor GlowingTextColor = ConsoleColor.White;
         public const ConsoleColor BackgroundColor = ConsoleColor.Black;
+        public const ConsoleColor ErrorColor = ConsoleColor.Red;
 
         private string OldConsoleTitle;
         private ConsoleColor OldBG;
@@ -32,6 +35,8 @@ namespace MatrixCode
         private SortedSet<CodeDrop> Drops;
 
         public Random RNG;
+        public Timer UpdateTimer;
+        private DateTime NextRepopulationTime;
                 
         public DisplayScreen()
         {
@@ -44,6 +49,8 @@ namespace MatrixCode
             FreeLanes = new SortedSet<int>(Enumerable.Range(0, Width));
             Drops = new SortedSet<CodeDrop>();
             RNG = new Random();
+            UpdateTimer = new Timer(UpdateTimerInterval) { AutoReset = true };
+            NextRepopulationTime = DateTime.Now;
             // Setup environment
             SetupEnvironment();
         }
@@ -103,27 +110,29 @@ namespace MatrixCode
         public void Run()
         {
             // Run the timed events
-            Timer myTimer = new Timer((CodeDrop.MinTimerInterval + CodeDrop.MaxTimerInterval) / 2);
-            myTimer.Elapsed += new ElapsedEventHandler(Update);
-            myTimer.AutoReset = true;
-            myTimer.Enabled = true;
+            UpdateTimer.Elapsed += new ElapsedEventHandler(Update);
+            NextRepopulationTime = DateTime.Now.AddMilliseconds(RepopulateInterval);
+            UpdateTimer.Enabled = true;
             // Wait for escape command
             while (!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape);
             // Stop the timer and tear down the environment
-            myTimer.Enabled = false;
+            UpdateTimer.Enabled = false;
             TeardownEnvironment();
         }
-
-        [MethodImpl(MethodImplOptions.Synchronized)]
+        
         private void Update(Object source, ElapsedEventArgs e) {
-            // Check if there are enough drops touching the top edge, if not, add some more
-            int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Where(d => !d.HasLeftTheScreen).Count(), MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
-            for (int i = 0; i < dropBudget; i++)
+            if (NextRepopulationTime < DateTime.Now)
             {
-                AddDrop();
+                // Check if there are enough drops touching the top edge, if not, add some more
+                int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Where(d => !d.HasLeftTheScreen).Count(), MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
+                for (int i = 0; i < dropBudget; i++)
+                {
+                    AddDrop();
+                }
+                NextRepopulationTime = NextRepopulationTime.AddMilliseconds(RepopulateInterval);
             }
         }
-
+        
         public void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
         {
             // Cast inputs

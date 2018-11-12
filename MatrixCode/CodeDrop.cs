@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Timers;
 
 namespace MatrixCode
@@ -12,11 +11,11 @@ namespace MatrixCode
         public const int MinDropLength = 5;
         public const int MaxDropLength = 45;
 
-        public const int MinTimerInterval = 50; // in milliseconds
-        public const int MaxTimerInterval = 150;
+        private const int MinUpdateInterval = 3 * DisplayScreen.UpdateTimerInterval; // in milliseconds
+        private const int MaxUpdateInterval = 8 * DisplayScreen.UpdateTimerInterval;
 
         private const double GlowingPercentile = 0.5; // percentage of the fastest drops that should glow
-        private const double MaxGlowingInterval = 1.0 / (1.0 / MaxTimerInterval + (1.0 - GlowingPercentile) * (1.0 / MinTimerInterval - 1.0 / MaxTimerInterval));
+        private const double MaxGlowingInterval = 1.0 / (1.0 / MaxUpdateInterval + (1.0 - GlowingPercentile) * (1.0 / MinUpdateInterval - 1.0 / MaxUpdateInterval));
 
         private const int MeanIntervalBetweenRandomChanges = 250;// in milliseconds
         private double ProbabilityOfRandomChange;
@@ -31,7 +30,9 @@ namespace MatrixCode
         private bool Glow;
         private char LastChar;
 
-        private Timer MyTimer;
+        private int MyUpdateInterval;
+        private DateTime NextUpdateTime;
+        private bool IsUpdating;
 
         public bool TouchesTopEdge
         {
@@ -70,12 +71,10 @@ namespace MatrixCode
             // Set parameters
             MyScreen = Caller;
             ID = NewID;
-            // Set the timer
-            MyTimer = new Timer();
-            MyTimer.Elapsed += new ElapsedEventHandler(OnTimerEvent);
-            MyTimer.AutoReset = true;
             // Reset state
             Reset(Lane);
+            // Finally, hear for the update 
+            Caller.UpdateTimer.Elapsed += new ElapsedEventHandler(Update);
         }
 
         public void Reset(int NewLane)
@@ -86,33 +85,36 @@ namespace MatrixCode
             // Sample a new length
             Size = MyScreen.RNG.Next(MinDropLength, MaxDropLength);
             // Reset timer
-            MyTimer.Interval = MyScreen.RNG.Next(MinTimerInterval, MaxTimerInterval);
-            MyTimer.Enabled = true;
+            MyUpdateInterval = MyScreen.RNG.Next(MinUpdateInterval, MaxUpdateInterval);
+            NextUpdateTime = DateTime.Now.AddMilliseconds(MyUpdateInterval);
             // Check whether to glow
-            Glow = (MyTimer.Interval < MaxGlowingInterval);
+            Glow = (MyUpdateInterval < MaxGlowingInterval);
             // Recalculate random change probability
-            ProbabilityOfRandomChange = (double)MyTimer.Interval / MeanIntervalBetweenRandomChanges;
+            ProbabilityOfRandomChange = (double)MyUpdateInterval / MeanIntervalBetweenRandomChanges;
         }
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        private void OnTimerEvent(Object source, ElapsedEventArgs e)
+        private void Update(Object source, ElapsedEventArgs e)
         {
-            if (!HasLeftTheScreen)
+            if (!IsUpdating && !HasLeftTheScreen && NextUpdateTime < DateTime.Now)
             {
-                UpdateState();
-                Display();
-            }
-            else
-            {
-                MyTimer.Enabled = false;
+                IsUpdating = true;
+                try
+                {
+                    YPos += 1;
+                    NextUpdateTime = NextUpdateTime.AddMilliseconds(MyUpdateInterval);
+                    Display();
+                }
+                catch
+                {
+                    MyScreen.WriteChar(XPos, YPos, '!', DisplayScreen.ErrorColor);
+                }
+                finally
+                {
+                    IsUpdating = false;
+                }
             }
         }
-
-        public void UpdateState()
-        {
-            YPos += 1;
-        }
-
+        
         public void Display()
         {
             // If the first character of this drop glows, write the character above again but without the glow
@@ -135,7 +137,10 @@ namespace MatrixCode
             if (MyScreen.RNG.NextDouble() < ProbabilityOfRandomChange)
             {
                 int MinY = Math.Max(0, YPos - Size + 1), MaxY = Math.Min(YPos - 1, MyScreen.Height + 1);
-                MyScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
+                if (MinY < MaxY)
+                {
+                    MyScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
+                }
             }
         }
 
