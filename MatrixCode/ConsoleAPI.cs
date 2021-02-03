@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
 
 namespace MatrixCode
 {
@@ -70,13 +70,14 @@ namespace MatrixCode
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public static void WriteChar(short XPos, short YPos, byte Payload, short Attributes) {
+        public static void WriteChar(short XPos, short YPos, byte Payload, short Attributes)
+        {
             // Get the handle if necessary
-            if (H == null)
+            if(H == null)
             {
                 H = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             }
-            if (!H.IsInvalid)
+            if(!H.IsInvalid)
             {
                 // Set position
                 SingleCharRect.Left = XPos;
@@ -87,7 +88,8 @@ namespace MatrixCode
                 SingleCharBuf[0].Attributes = Attributes;
                 SingleCharBuf[0].Char.AsciiChar = Payload;
                 // Write output
-                if (!WriteConsoleOutput(H, SingleCharBuf, OneByOne, Zero, ref SingleCharRect)) {
+                if(!WriteConsoleOutput(H, SingleCharBuf, OneByOne, Zero, ref SingleCharRect))
+                {
                     throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                 }
             }

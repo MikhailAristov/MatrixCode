@@ -37,13 +37,13 @@ namespace MatrixCode
         public Random RNG;
         public Timer UpdateTimer;
         private DateTime NextRepopulationTime;
-                
+
         public DisplayScreen()
         {
             // Display parameters
             Width = Console.WindowWidth - MarginLeft - MarginRight;
             Height = Console.WindowHeight - MarginTop - MarginBottom;
-            MaxDropsOnScreen = (int)Math.Min(Width * Height / (CodeDrop.MinDropLength + CodeDrop.MaxDropLength), Width * 0.45);
+            MaxDropsOnScreen = (int)Math.Min(Width * Height / ( CodeDrop.MinDropLength + CodeDrop.MaxDropLength ), Width * 0.45);
             MaxDropsOnTopEdge = MaxDropsOnScreen / 2;
             // Initialize free lane set
             FreeLanes = new SortedSet<int>(Enumerable.Range(0, Width));
@@ -77,10 +77,11 @@ namespace MatrixCode
             Console.CursorVisible = true;
         }
 
-        private CodeDrop AddDrop() {
+        private CodeDrop AddDrop()
+        {
             // Check if we can recycle an old drop
             CodeDrop drop = Drops.Where(d => d.HasLeftTheScreen).FirstOrDefault();
-            if (drop != null)
+            if(drop != null)
             {
                 ReturnLane(drop.XPos);
                 drop.Reset(ReserveLane());
@@ -114,30 +115,34 @@ namespace MatrixCode
             NextRepopulationTime = DateTime.Now.AddMilliseconds(RepopulateInterval);
             UpdateTimer.Enabled = true;
             // Wait for escape command
-            while (!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape);
+            while(!Console.KeyAvailable && Console.ReadKey(true).Key != ConsoleKey.Escape)
+            {
+                // Do nothing
+            }
             // Stop the timer and tear down the environment
             UpdateTimer.Enabled = false;
             TeardownEnvironment();
         }
-        
-        private void Update(Object source, ElapsedEventArgs e) {
-            if (NextRepopulationTime < DateTime.Now)
+
+        private void Update(Object source, ElapsedEventArgs e)
+        {
+            if(NextRepopulationTime < DateTime.Now)
             {
                 // Check if there are enough drops touching the top edge, if not, add some more
                 int dropBudget = Math.Min(MaxDropsOnScreen - Drops.Where(d => !d.HasLeftTheScreen).Count(), MaxDropsOnTopEdge - Drops.Where(d => d.TouchesTopEdge).Count());
-                for (int i = 0; i < dropBudget; i++)
+                for(int i = 0; i < dropBudget; i++)
                 {
                     AddDrop();
                 }
                 NextRepopulationTime = NextRepopulationTime.AddMilliseconds(RepopulateInterval);
             }
         }
-        
+
         public void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
         {
             // Cast inputs
-            short x = (short)(XPos + MarginLeft);
-            short y = (short)(YPos + MarginTop);
+            short x = (short)( XPos + MarginLeft );
+            short y = (short)( YPos + MarginTop );
             byte ch = (byte)Payload;
             short att = (short)ForegroundColor;
             // Call API

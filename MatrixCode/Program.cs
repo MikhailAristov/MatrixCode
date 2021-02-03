@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MatrixCode
+﻿namespace MatrixCode
 {
     class Program
     {

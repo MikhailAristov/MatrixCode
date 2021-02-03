@@ -15,7 +15,7 @@ namespace MatrixCode
         private const int MaxUpdateInterval = 8 * DisplayScreen.UpdateTimerInterval;
 
         private const double GlowingPercentile = 0.5; // percentage of the fastest drops that should glow
-        private const double MaxGlowingInterval = 1.0 / (1.0 / MaxUpdateInterval + (1.0 - GlowingPercentile) * (1.0 / MinUpdateInterval - 1.0 / MaxUpdateInterval));
+        private const double MaxGlowingInterval = 1.0 / ( 1.0 / MaxUpdateInterval + ( 1.0 - GlowingPercentile ) * ( 1.0 / MinUpdateInterval - 1.0 / MaxUpdateInterval ) );
 
         private const int MeanIntervalBetweenRandomChanges = 250;// in milliseconds
         private double ProbabilityOfRandomChange;
@@ -34,29 +34,11 @@ namespace MatrixCode
         private DateTime NextUpdateTime;
         private bool IsUpdating;
 
-        public bool TouchesTopEdge
-        {
-            get
-            {
-                return YPos < Size;
-            }
-        }
+        public bool TouchesTopEdge => YPos < Size;
 
-        public bool TouchesBottomEdge
-        {
-            get
-            {
-                return YPos > MyScreen.Height;
-            }
-        }
+        public bool TouchesBottomEdge => YPos > MyScreen.Height;
 
-        public bool HasLeftTheScreen
-        {
-            get
-            {
-                return YPos - Size > MyScreen.Height;
-            }
-        }
+        public bool HasLeftTheScreen => YPos - Size > MyScreen.Height;
 
         public CodeDrop(DisplayScreen Caller, int NewID, int Lane)
         {
@@ -64,7 +46,7 @@ namespace MatrixCode
             Debug.Assert(NewID >= 0);
             Debug.Assert(Lane >= 0);
             // Set allowed drop symbols íf not yet set
-            if (Symbols == null)
+            if(Symbols == null)
             {
                 Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Concat(Enumerable.Range(128, 91), Enumerable.Range(224, 30))).Select(i => (char)i).ToArray();
             }
@@ -88,14 +70,14 @@ namespace MatrixCode
             MyUpdateInterval = MyScreen.RNG.Next(MinUpdateInterval, MaxUpdateInterval);
             NextUpdateTime = DateTime.Now.AddMilliseconds(MyUpdateInterval);
             // Check whether to glow
-            Glow = (MyUpdateInterval < MaxGlowingInterval);
+            Glow = ( MyUpdateInterval < MaxGlowingInterval );
             // Recalculate random change probability
             ProbabilityOfRandomChange = (double)MyUpdateInterval / MeanIntervalBetweenRandomChanges;
         }
 
         private void Update(Object source, ElapsedEventArgs e)
         {
-            if (!IsUpdating && !HasLeftTheScreen && NextUpdateTime < DateTime.Now)
+            if(!IsUpdating && !HasLeftTheScreen && NextUpdateTime < DateTime.Now)
             {
                 IsUpdating = true;
                 try
@@ -114,30 +96,30 @@ namespace MatrixCode
                 }
             }
         }
-        
+
         public void Display()
         {
             // If the first character of this drop glows, write the character above again but without the glow
-            if (Glow && YPos > 0 && YPos <= MyScreen.Height + 1)
+            if(Glow && YPos > 0 && YPos <= MyScreen.Height + 1)
             {
                 MyScreen.WriteChar(XPos, YPos - 1, LastChar, DisplayScreen.TextColor);
             }
             // Generate a new char and let it glow if necessary
-            if (!TouchesBottomEdge)
+            if(!TouchesBottomEdge)
             {
                 LastChar = Symbols[MyScreen.RNG.Next(Symbols.Length)];
                 MyScreen.WriteChar(XPos, YPos, LastChar, Glow ? DisplayScreen.GlowingTextColor : DisplayScreen.TextColor);
             }
             // If the drop no longer touches the top edge, erase the symbol right above it to create the illusion of movement
-            if (!TouchesTopEdge)
+            if(!TouchesTopEdge)
             {
                 MyScreen.WriteChar(XPos, YPos - Size, ' ', DisplayScreen.BackgroundColor);
             }
             // Randomly alter a previously placed character
-            if (MyScreen.RNG.NextDouble() < ProbabilityOfRandomChange)
+            if(MyScreen.RNG.NextDouble() < ProbabilityOfRandomChange)
             {
                 int MinY = Math.Max(0, YPos - Size + 1), MaxY = Math.Min(YPos - 1, MyScreen.Height + 1);
-                if (MinY < MaxY)
+                if(MinY < MaxY)
                 {
                     MyScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
                 }
@@ -146,7 +128,7 @@ namespace MatrixCode
 
         public int CompareTo(CodeDrop other)
         {
-            return this.XPos - other.XPos;
+            return XPos - other.XPos;
         }
     }
 }
