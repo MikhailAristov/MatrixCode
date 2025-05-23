@@ -22,7 +22,7 @@ namespace MatrixCode
 
         private static char[] Symbols;
 
-        private DisplayScreen MyScreen;
+        private readonly DisplayScreen MyScreen;
         public readonly int ID;
         public int XPos { get; private set; }
         private int YPos;
@@ -46,10 +46,7 @@ namespace MatrixCode
             Debug.Assert(NewID >= 0);
             Debug.Assert(Lane >= 0);
             // Set allowed drop symbols íf not yet set
-            if(Symbols == null)
-            {
-                Symbols = Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Concat(Enumerable.Range(128, 91), Enumerable.Range(224, 30))).Select(i => (char)i).ToArray();
-            }
+            Symbols ??= [.. Enumerable.Concat(Enumerable.Range(33, 94), Enumerable.Concat(Enumerable.Range(128, 91), Enumerable.Range(224, 30))).Select(i => (char)i)];
             // Set parameters
             MyScreen = Caller;
             ID = NewID;
@@ -88,7 +85,7 @@ namespace MatrixCode
                 }
                 catch
                 {
-                    MyScreen.WriteChar(XPos, YPos, '!', DisplayScreen.ErrorColor);
+                    DisplayScreen.WriteChar(XPos, YPos, '!', DisplayScreen.ErrorColor);
                 }
                 finally
                 {
@@ -102,18 +99,18 @@ namespace MatrixCode
             // If the first character of this drop glows, write the character above again but without the glow
             if(Glow && YPos > 0 && YPos <= MyScreen.Height + 1)
             {
-                MyScreen.WriteChar(XPos, YPos - 1, LastChar, DisplayScreen.TextColor);
+                DisplayScreen.WriteChar(XPos, YPos - 1, LastChar, DisplayScreen.TextColor);
             }
             // Generate a new char and let it glow if necessary
             if(!TouchesBottomEdge)
             {
                 LastChar = Symbols[MyScreen.RNG.Next(Symbols.Length)];
-                MyScreen.WriteChar(XPos, YPos, LastChar, Glow ? DisplayScreen.GlowingTextColor : DisplayScreen.TextColor);
+                DisplayScreen.WriteChar(XPos, YPos, LastChar, Glow ? DisplayScreen.GlowingTextColor : DisplayScreen.TextColor);
             }
             // If the drop no longer touches the top edge, erase the symbol right above it to create the illusion of movement
             if(!TouchesTopEdge)
             {
-                MyScreen.WriteChar(XPos, YPos - Size, ' ', DisplayScreen.BackgroundColor);
+                DisplayScreen.WriteChar(XPos, YPos - Size, ' ', DisplayScreen.BackgroundColor);
             }
             // Randomly alter a previously placed character
             if(MyScreen.RNG.NextDouble() < ProbabilityOfRandomChange)
@@ -121,7 +118,7 @@ namespace MatrixCode
                 int MinY = Math.Max(0, YPos - Size + 1), MaxY = Math.Min(YPos - 1, MyScreen.Height + 1);
                 if(MinY < MaxY)
                 {
-                    MyScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
+                    DisplayScreen.WriteChar(XPos, MyScreen.RNG.Next(MinY, MaxY), Symbols[MyScreen.RNG.Next(Symbols.Length)], DisplayScreen.TextColor);
                 }
             }
         }

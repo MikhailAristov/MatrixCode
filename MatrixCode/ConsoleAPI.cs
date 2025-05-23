@@ -10,12 +10,12 @@ namespace MatrixCode
     class ConsoleAPI
     {
         private static SafeFileHandle H;
-        private static SmallRect SingleCharRect = new SmallRect();
+        private static SmallRect SingleCharRect = new();
         private static readonly CharInfo[] SingleCharBuf = new CharInfo[1];
-        private static readonly Coord Zero = new Coord() { X = 0, Y = 0 };
-        private static readonly Coord OneByOne = new Coord() { X = 1, Y = 1 };
+        private static readonly Coord Zero = new() { X = 0, Y = 0 };
+        private static readonly Coord OneByOne = new() { X = 1, Y = 1 };
 
-        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern SafeFileHandle CreateFile(
             string fileName,
             [MarshalAs(UnmanagedType.U4)] uint fileAccess,
@@ -34,16 +34,10 @@ namespace MatrixCode
             ref SmallRect lpWriteRegion);
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct Coord
+        public struct Coord(short x, short y)
         {
-            public short X;
-            public short Y;
-
-            public Coord(short X, short Y)
-            {
-                this.X = X;
-                this.Y = Y;
-            }
+            public short X = x;
+            public short Y = y;
         };
 
         [StructLayout(LayoutKind.Explicit)]
@@ -73,10 +67,7 @@ namespace MatrixCode
         public static void WriteChar(short XPos, short YPos, byte Payload, short Attributes)
         {
             // Get the handle if necessary
-            if(H == null)
-            {
-                H = CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-            }
+            H ??= CreateFile("CONOUT$", 0x40000000, 2, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
             if(!H.IsInvalid)
             {
                 // Set position

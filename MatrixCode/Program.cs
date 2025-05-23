@@ -2,9 +2,9 @@
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            DisplayScreen output = new DisplayScreen();
+            DisplayScreen output = new();
             output.Run();
         }
     }

@@ -31,8 +31,8 @@ namespace MatrixCode
         private ConsoleColor OldBG;
         private ConsoleColor OldFG;
 
-        private SortedSet<int> FreeLanes;
-        private SortedSet<CodeDrop> Drops;
+        private readonly SortedSet<int> FreeLanes;
+        private readonly SortedSet<CodeDrop> Drops;
 
         public Random RNG;
         public Timer UpdateTimer;
@@ -46,8 +46,8 @@ namespace MatrixCode
             MaxDropsOnScreen = (int)Math.Min(Width * Height / ( CodeDrop.MinDropLength + CodeDrop.MaxDropLength ), Width * 0.45);
             MaxDropsOnTopEdge = MaxDropsOnScreen / 2;
             // Initialize free lane set
-            FreeLanes = new SortedSet<int>(Enumerable.Range(0, Width));
-            Drops = new SortedSet<CodeDrop>();
+            FreeLanes = [.. Enumerable.Range(0, Width)];
+            Drops = [];
             RNG = new Random();
             UpdateTimer = new Timer(UpdateTimerInterval) { AutoReset = true };
             NextRepopulationTime = DateTime.Now;
@@ -58,14 +58,18 @@ namespace MatrixCode
         private void SetupEnvironment()
         {
             // Save old setttings
-            OldConsoleTitle = Console.Title;
             OldBG = Console.BackgroundColor;
             OldFG = Console.ForegroundColor;
             // Customize console
-            Console.Title = "What is the Matrix?";
             Console.BackgroundColor = BackgroundColor;
             Console.ForegroundColor = TextColor;
             Console.CursorVisible = false;
+            // Customize console title on Windows
+            if(OperatingSystem.IsWindows())
+            {
+                OldConsoleTitle = Console.Title;
+                Console.Title = "What is the Matrix?";
+            }
         }
 
         private void TeardownEnvironment()
@@ -138,7 +142,7 @@ namespace MatrixCode
             }
         }
 
-        public void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
+        public static void WriteChar(int XPos, int YPos, char Payload, ConsoleColor ForegroundColor)
         {
             // Cast inputs
             short x = (short)( XPos + MarginLeft );
